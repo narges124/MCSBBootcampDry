@@ -16,7 +16,7 @@ allows us to infer ???
 from observations of ???
 in ???.
 In panel B, we compare the resulting estimations of ???
-in units of ???.
-Data are shown for two conditions, ??? and ???.
-Overlaid curves are best fits of the ??? model
-and the ??? model.
+in units of cm/s.
+Data are shown for two conditions, wild type and formin knockout.
+Overlaid curves are best fits of the precessive model
+and the one stage reduction model.
