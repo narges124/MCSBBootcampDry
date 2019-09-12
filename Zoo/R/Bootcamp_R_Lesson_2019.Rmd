@@ -6,7 +6,12 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+#knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r setup, include=FALSE}
+cat('set Direction')
+setwd('C:/MCSB_boot_camp/MCSBBootcampDry/Zoo/R/')
 ```
 
 ##First things first: Gather materials!
@@ -45,10 +50,10 @@ To explore this interplay, we will end this module with a project where we look 
 ####NOTE: You will need to change the file path based on where you saved these files.
 
 #extract metadata (information about each cell, e.g. cluster assignment)
-cell_metadata <- read.table("/Users/kerriganblake/Desktop/Misc/R_Markdown_Bootcamp_2018/cell_metadata.txt")
+cell_metadata <- read.table("cell_metadata.txt")
 
 #extract the normalized data matrix
-expression_matrix <- readRDS("/Users/kerriganblake/Desktop/Misc/R_Markdown_Bootcamp_2018/expression_matrix.rds")
+expression_matrix <- readRDS("expression_matrix.rds")
 ```
 
 ##Data Investigation
@@ -80,7 +85,7 @@ table(cell_metadata$orig.ident, cell_metadata$res.0.4)
 #first item is the dataframe (a type of R object containing a mix of numbers, characters and factors) that has the data you want to plot
 #next, you give a mapping, where x=column name of data you want to plot on the x-axis, etc with fill generating a different color for each factor you plot
 #finally, you tell ggplot the type of plot you want to render (for example, geom_point() would make a dot plot)
-ggplot(cell_metadata, mapping=aes(x=orig.ident, y=nGene, fill=orig.ident)) + geom_violin()
+ggplot(cell_metadata, mapping=aes(x=orig.ident, y=nGene, fill=orig.ident)) + geom_violin() + geom_jitter()
 ```
 
 ###Question 4a: What are the most commonly expressed genes in the dataset? (i.e. Which gene or set of genes is expressed in the largest number of cells)?
@@ -221,16 +226,34 @@ pheatmap(expression_matrix[genes_of_interest,],
 ##Project: Given the following list of cell cycle genes, perform as many tasks as you can in the remaining time. 
 
 ```{r cell cycle genes}
-cell_cycle_genes <- as.character(read.table("/Users/kerriganblake/Desktop/Misc/R_Markdown_Bootcamp_2018/regev_lab_cell_cycle_genes.txt", header=F)$V1)
+cell_cycle_genes <- as.character(read.table("regev_lab_cell_cycle_genes.txt", header=F)$V1)
 ```
 
 ###Task 1: Reduce the cell_cycle_genes to only those that are present and expressed in at least 500 cells. 
 ####Hint: There will be 14 genes that pass this threshold
 
+```{r Task 1}
+cell_cycle_genes_subset <- t(expression_matrix[which(rownames(expression_matrix) %in% cell_cycle_genes), rownames(cell_metadata)])
+
+cell_cycle_genes_subset <- as.matrix(cell_cycle_genes_subset[,names(colSums(cell_cycle_genes_subset > 0)[colSums(cell_cycle_genes_subset >0) >= 500])])
+
+```
+
 ###Task 2: Assign each gene in cell_cycle_genes to a specific phase of the cell cycle based on our dataset.
 ####Hint: You will need both the cell metadata & expression_matrix for this task.
 
+```{r Task 2}
+cell_cycle_genes_subset_metadate <- cbind(cell_metadata[,"Phase"], as.data.frame(cell_cycle_genes_subset))
+colnames(cell_cycle_genes_subset_metadate)[1] <- "Phase"
+```
+
 ###Task 3: Show that your cell_cycle_gene phase assignments "make sense" using the visualization of your choice. Feel free to be creative - there are many more functionalities than what we've seen here!
+```{r Task3}
+cell_cycle_genes_subset <- as.matrix(cell_cycle_genes_subset)
+pheatmap(t(cell_cycle_genes_subset),
+         cluster_cols = TRUE,
+         show_colnames = FALSE)
+```
 
 ##Example Solutions
 
@@ -278,7 +301,7 @@ pheatmap(t(matrix_subset_of_interest[order(cell_metadata$Phase),order(anno_row$c
          breaks = c(-5,seq(-1,1,by=0.05),5))
 
 ###########Barplot of average log fold-change option##################
-subset_cc_gene_with_metadata <- genes_of_interest_with_metadata[,c(1,which(colnames(genes_of_interest_with_metadata) %in% as.character(cc_summary$gene)))]
+subset_cc_gene_with_metadata <- cell_cycle_genes_subset_metadate[,c(1,which(colnames(cell_cycle_genes_subset_metadate) %in% as.character(cc_summary$gene)))]
 
 barplot_df <- subset_cc_gene_with_metadata %>%
   gather(key="gene", value="expression", RPA2:PCNA) %>%
